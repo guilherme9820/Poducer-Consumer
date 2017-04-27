@@ -8,36 +8,39 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-//int reader = 0;
 int writer = 0;
 
 void *Leitor(void *arg){
-	int id = (int) arg;
+	long id = (long)arg;
 	while(1){
 		pthread_mutex_lock(&mutex);
-		if(writer > 0)
+		while(writer > 0)
 			pthread_cond_wait(&cond, &mutex);
 		pthread_cond_signal(&cond);
 		pthread_mutex_unlock(&mutex);
-		printf("Leitor %d esta lendo....\n", id);	
+		srand(time(NULL));
+
+		printf("Leitor %ld esta lendo....\n", id);
+		sleep(1 + rand() % 4);	
 	}
 	pthread_exit(NULL);
 }
 
 void *Escritor(void *arg){
-	int id = (int) arg;
+	long id = (long)arg;
 	while(1){
 		pthread_mutex_lock(&mutex);
-		if(writer > 0)
+		while(writer > 0)
 			pthread_cond_wait(&cond, &mutex);
-		else{
-			writer++;
-			printf("Escritor %d esta escrevendo...\n", id);			
-		}
+		writer++;	
 		pthread_mutex_unlock(&mutex);
+		srand(time(NULL));
+
+		printf("Escritor %ld esta escrevendo...\n", id);
+		//sleep(1 + rand() % 4);
 
 		pthread_mutex_lock(&mutex);
-		printf("Escritor %d terminou de escrever.\n", id);
+		printf("Escritor %ld terminou de escrever!\n", id);
 		writer--;
 		pthread_cond_signal(&cond);	
 		pthread_mutex_unlock(&mutex);
@@ -48,7 +51,8 @@ void *Escritor(void *arg){
 
 int main(void){
 	pthread_t leitor[N_LEITORES], escritor[N_ESCRITORES];
-	int i, rc;
+	long i;
+	int rc;
 
 	for(i = 0; i < N_LEITORES; i++){
 		rc = pthread_create(&leitor[i], NULL, Leitor, (void *)i);
@@ -75,4 +79,3 @@ int main(void){
 	}
 
 }
-
